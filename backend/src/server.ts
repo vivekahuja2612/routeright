@@ -51,6 +51,7 @@ HARD RULES:
 - Never silently omit a mode — include disclosures array for any absent mode.
 - Cab options labeled as estimated must carry that label in the instruction.
 - If destination is outside 200km or source equals destination, return refusal in reason field.
+- For cab options, use EXACTLY the duration_minutes and fare values from the CAB OPTIONS section. Never compute your own cab travel time or cost — the values are pre-computed and authoritative.
 
 EXAMPLE (Andheri → Lower Parel, 8:15am leave):
 [

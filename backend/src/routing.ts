@@ -38,18 +38,19 @@ export interface CabEstimate {
 }
 
 // Mumbai 2024 auto rates: ₹20 base + ₹15/km. Mini cab: ₹50 base + ₹12/km.
-// Peak surge: 1.4×. Speed: 25 km/h peak (mixed WEH + surface), 35 km/h off-peak.
+// Peak surge: 1.4×. Speed: 23 km/h peak (recalibrated for surface + WEH congestion), 30 km/h off-peak.
+// Mini cab 12% faster than auto (AC cars, fewer stops) — ratio not flat to avoid 1-min absurdities.
 export function cabEstimate(distanceKm: number, hour: number): CabEstimate {
   const peak = isPeakHour(hour);
   const surge = peak ? 1.4 : 1.0;
-  const speedKmh = peak ? 25 : 35;
+  const speedKmh = peak ? 23 : 30;
   const duration = Math.round((distanceKm / speedKmh) * 60);
   const autoFare = Math.round((20 + Math.max(0, distanceKm - 1.5) * 15) * surge);
   const miniFare = Math.round((50 + distanceKm * 12) * surge);
   return {
     auto_duration_minutes: duration,
     auto_fare_inr: Math.max(25, autoFare),
-    mini_duration_minutes: Math.max(1, duration - 5),
+    mini_duration_minutes: Math.max(1, Math.round(duration * 0.88)),
     mini_fare_inr: Math.max(50, miniFare),
     is_estimated: true,
     disclosure: '⚠️ Estimated pricing — live Ola/Uber rates unavailable',
