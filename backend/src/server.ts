@@ -58,6 +58,28 @@ EXAMPLE (Andheri → Lower Parel, 8:15am leave):
   {"total_time_minutes":43,"total_cost_inr":10,"legs":[{"mode":"walk","instruction":"Walk to Andheri WR Station","duration_minutes":4,"cost_inr":0},{"mode":"local_train","instruction":"Board 8:20 WR Slow from Andheri. Exit at Lower Parel.","duration_minutes":27,"cost_inr":10},{"mode":"walk","instruction":"Walk from Lower Parel Station to destination","duration_minutes":12,"cost_inr":0}],"least_congested_window":"10:00am – 12:00pm","most_congested_window":"8:00am – 10:00am","google_maps_baseline_minutes":58}
 ]`;
 
+const MUMBAI_LAT = 19.0760;
+const MUMBAI_LON = 72.8777;
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function geocodePlace(name: string, searchContext: string): Promise<{ lat: number; lon: number } | null> {
+  const geoRes = await fetch(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name + ' ' + searchContext)}&format=json&limit=1`,
+    { headers: { 'User-Agent': 'RouteRight/1.0 (routeright.vercel.app)' }, signal: AbortSignal.timeout(3000) }
+  );
+  const data = await geoRes.json() as Array<{ lat: string; lon: string }>;
+  if (data[0]) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+  return null;
+}
+
 // Pre-computes exact departure and arrival times for each option so Claude does zero time arithmetic.
 function buildTransitContext(
   source: string,
@@ -187,6 +209,7 @@ interface SearchResponse {
   reason?: string;
   disclosures?: string[];
   error?: string;
+  distance_km?: number | null;
 }
 
 app.get('/', (_req: Request, res: Response) => {
@@ -427,7 +450,8 @@ app.get('/', (_req: Request, res: Response) => {
         return;
       }
 
-      let html = '<p class="section-header">' + source + ' → ' + dest + ' &nbsp;·&nbsp; Leaving ' + leaving + '</p>';
+      const distStr = data.distance_km ? ' · ' + data.distance_km.toFixed(1) + ' km' : '';
+      let html = '<p class="section-header">' + source + ' → ' + dest + distStr + ' &nbsp;·&nbsp; Leaving ' + leaving + '</p>';
 
       if (data.disclosures) {
         data.disclosures.forEach(d => { html += '<p class="disclosure">' + d + '</p>'; });
@@ -462,35 +486,37 @@ app.post('/api/search', async (req: Request<object, object, SearchBody>, res: Re
     return;
   }
 
-  // Guard: if destination not in corpus, check it's within 200km of Mumbai before calling Claude
-  if (roadDistanceKm(source, destination) === null) {
+  // Validate locations and compute road distance
+  const corpusDistanceKm = roadDistanceKm(source, destination);
+  let distanceKm: number | null = corpusDistanceKm;
+
+  if (corpusDistanceKm === null) {
     try {
-      const geoRes = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination + ' India')}&format=json&limit=1`,
-        { headers: { 'User-Agent': 'RouteRight/1.0 (routeright.vercel.app)' }, signal: AbortSignal.timeout(3000) }
-      );
-      const geoData = await geoRes.json() as Array<{ lat: string; lon: string }>;
-      if (geoData[0]) {
-        const destLat = parseFloat(geoData[0].lat);
-        const destLon = parseFloat(geoData[0].lon);
-        // Haversine from Mumbai center
-        const R = 6371;
-        const toRad = (d: number) => (d * Math.PI) / 180;
-        const dLat = toRad(destLat - 19.0760);
-        const dLng = toRad(destLon - 72.8777);
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(19.0760)) * Math.cos(toRad(destLat)) * Math.sin(dLng / 2) ** 2;
-        const km = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        if (km > 200) {
-          res.json({
-            routes: [],
-            error: 'outside_coverage',
-            reason: `${destination} is more than 200km from Mumbai. RouteRight only covers routes within Mumbai.`,
-          });
-          return;
-        }
+      const srcCoord = await geocodePlace(source, 'Mumbai India');
+      if (!srcCoord) {
+        res.json({ routes: [], error: 'location_not_found', reason: `Couldn't recognize "${source}". Try a Mumbai neighborhood, station, or landmark.` });
+        return;
       }
+
+      const dstCoord = await geocodePlace(destination, 'India');
+      if (!dstCoord) {
+        res.json({ routes: [], error: 'location_not_found', reason: `Couldn't recognize "${destination}". Try a Mumbai neighborhood, station, or landmark.` });
+        return;
+      }
+
+      const dstDistFromMumbai = haversineKm(MUMBAI_LAT, MUMBAI_LON, dstCoord.lat, dstCoord.lon);
+      if (dstDistFromMumbai > 200) {
+        res.json({
+          routes: [],
+          error: 'outside_coverage',
+          reason: `${destination} is more than 200km from Mumbai. RouteRight only covers routes within Mumbai.`,
+        });
+        return;
+      }
+
+      distanceKm = Math.round(haversineKm(srcCoord.lat, srcCoord.lon, dstCoord.lat, dstCoord.lon) * 1.4 * 10) / 10;
     } catch {
-      // Geocoding timed out or failed — proceed, Claude will handle it
+      // Geocoding failed — proceed without location validation
     }
   }
 
@@ -532,6 +558,7 @@ Return ALL viable options (train, bus, cab) that beat the walking baseline, rank
       result = parsed as SearchResponse;
     }
 
+    result.distance_km = distanceKm !== null ? Math.round(distanceKm * 10) / 10 : null;
     res.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
