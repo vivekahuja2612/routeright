@@ -206,7 +206,7 @@ export default function SearchScreen() {
         </View>
       )}
       {destText.length >= 2 && !destLoading && destSuggestions.length === 0 && !destSelected && (
-        <Text style={styles.hint}>No locations found in Mumbai</Text>
+        <Text style={styles.hint}>We couldn't find that location in Mumbai. Please check the name and try again.</Text>
       )}
 
       <Text style={styles.label}>LEAVING AT</Text>

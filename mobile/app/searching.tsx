@@ -96,6 +96,22 @@ export default function SearchingScreen() {
         if (done.current) return;
         done.current = true;
 
+        if (result.error) {
+          setError({
+            message: "We're having trouble finding routes right now. Try again in a moment.",
+            isNetwork: false,
+          });
+          return;
+        }
+
+        if (!result.routes?.length && !result.suggested_leave_by) {
+          setError({
+            message: "We're having trouble finding routes right now. Try again in a moment.",
+            isNetwork: false,
+          });
+          return;
+        }
+
         if (result.suggested_leave_by) {
           router.replace({
             pathname: '/no-results',

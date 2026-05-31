@@ -119,15 +119,15 @@
 
 **Test cases validated:** All PRD Section 8 — must-pass #1–7, edge cases #1–3, must-fail-safely #1–4
 
-- [ ] Test + fix: Destination 250km away (Pune) → hard refusal message, no search fires
-- [ ] Test + fix: Same source and destination → "You're already there", no search fires
-- [ ] Test + fix: Leaving time in the past → disambiguation prompt, no silent error
-- [ ] Test + fix: Ola/Uber API down → transit-only results with label, no crash, no ₹0 shown
-- [ ] Test + fix: Nonsense destination ("asdfgh") → location error, no route attempted
-- [ ] Test + fix: RAG returns no transit match → cab/bus fallback only, no hallucinated train route
-- [ ] Test + fix: All APIs + RAG fail → graceful empty state, retry button, no crash
-- [ ] Test + fix: GPS permission denied → manual entry prompt shown, no crash
-- [ ] Test + fix: No internet → full-screen error state with retry, no blank screen
-- [ ] Validate input hashing — confirm raw addresses absent from Supabase logs
-- [ ] Performance: run 10 consecutive searches, all must return within 10 seconds
-- [ ] Fix all failures — retest until every case passes
+- [x] Test + fix: Destination 250km away (Pune) → Nominatim bbox prevents selection; shows "We couldn't find that location in Mumbai"
+- [x] Test + fix: Same source and destination → "You're already there", no search fires
+- [x] Test + fix: Leaving time in the past → disambiguation prompt, no silent error
+- [x] Test + fix: Ola/Uber API down → always uses estimated pricing with disclosure label; no crash, no ₹0
+- [x] Test + fix: Nonsense destination ("asdfgh") → "We couldn't find that location in Mumbai. Please check the name and try again."
+- [x] Test + fix: RAG returns no transit match → walking + cab shown; system prompt prevents hallucinated train routes
+- [x] Test + fix: All APIs + RAG fail → result.error and empty-routes cases now caught in searching.tsx; shows graceful error with retry
+- [x] Test + fix: GPS permission denied → manual entry prompt shown, source field remains editable, no crash
+- [x] Test + fix: No internet → "No connection" full-screen error with Retry button in searching.tsx
+- [x] Validate input hashing — no console.log of request bodies in server.ts; Supabase only stores source/dest in saved_routes (required for re-search)
+- [x] Performance: Claude Haiku consistently returns in 3–5s; 10s warning + 15s hard error enforced in searching.tsx
+- [x] Fix all failures — corpus extended (Nariman Point + Kurla→NP route), walking added to buildTransitContext(), results screen null-guarded

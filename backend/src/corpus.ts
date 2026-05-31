@@ -44,6 +44,7 @@ export const LOCALITIES: Record<string, { lat: number; lng: number }> = {
   'cst':           { lat: 18.9398, lng: 72.8354 },
   'csmt':          { lat: 18.9398, lng: 72.8354 },
   'bkc':           { lat: 19.0653, lng: 72.8686 },
+  'nariman point': { lat: 18.9256, lng: 72.8242 },
 };
 
 // Keyed by "normalized-source→normalized-dest"
@@ -64,6 +65,23 @@ const ROUTES: Record<string, RouteEntry> = {
     walk_to_station_minutes: 4,
     walk_from_station_minutes: 12,
     congestion: { most: '8:00am – 10:00am', least: '10:00am – 12:00pm' },
+  },
+
+  'kurla→nariman point': {
+    trains: [
+      {
+        line: 'CR Main Line Fast (Kurla → Chhatrapati Shivaji Maharaj Terminus)',
+        departures: ['7:20am', '7:25am', '7:30am', '7:35am', '7:40am', '7:45am', '7:50am'],
+        duration_minutes: 22,
+        fare_inr: 15,
+      },
+    ],
+    buses: [
+      { route: '3 LTD', from: 'Kurla Bus Depot', to: 'Nariman Point', duration_minutes: 80, fare_inr: 25, frequency_minutes: 20 },
+    ],
+    walk_to_station_minutes: 5,
+    walk_from_station_minutes: 15,
+    congestion: { most: '7:00am – 10:00am', least: '11:00am – 1:00pm' },
   },
 
   'borivali→churchgate': {

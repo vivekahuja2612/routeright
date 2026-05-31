@@ -128,7 +128,15 @@ function buildTransitContext(
     lines.push('Disclosure: ⚠️ Cab options unavailable for this route.');
   }
 
-  lines.push(`INSTRUCTION: Return all options where "Meets deadline: YES" as ranked routes. If none meet the deadline, return suggested_leave_by (calculated as: deadline minus fastest total journey time).`);
+  if (distKm !== null && departMins !== null && deadlineMins !== null) {
+    const walkDuration = Math.round((distKm * 1000) / 80);
+    const walkArrival = departMins + walkDuration;
+    lines.push('WALKING OPTION:');
+    lines.push(`  Road distance: ${distKm.toFixed(1)}km | Duration: ${walkDuration} min → arrives ${formatTime(walkArrival)} | ₹0`);
+    lines.push(`  Meets ${expectedArrival} deadline: ${walkArrival <= deadlineMins ? 'YES' : 'NO'}`);
+  }
+
+  lines.push(`INSTRUCTION: Return all options where "Meets deadline: YES" as ranked routes. Include walking as a route if it meets the deadline. If none meet the deadline, return suggested_leave_by (calculated as: deadline minus fastest total journey time).`);
 
   return lines.join('\n');
 }

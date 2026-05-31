@@ -74,7 +74,11 @@ export default function ResultsScreen() {
           <Text key={i} style={styles.disclosure}>{d}</Text>
         ))}
 
-        {result.routes.map((route, i) => (
+        {result.routes?.length === 0 && (
+          <Text style={styles.emptyText}>No routes found for this journey.</Text>
+        )}
+
+        {(result.routes ?? []).map((route, i) => (
           <TouchableOpacity
             key={i}
             style={styles.card}
@@ -157,6 +161,7 @@ const styles = StyleSheet.create({
   red: { color: '#DC2626' },
   searchAgain: { alignItems: 'center', marginTop: 12, marginBottom: 24 },
   searchAgainText: { fontFamily: 'Inter_400Regular', color: '#6B6B6B', fontSize: 14 },
+  emptyText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#6B6B6B', textAlign: 'center', marginVertical: 32 },
   errorText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#DC2626', textAlign: 'center', marginBottom: 24 },
   button: {
     backgroundColor: '#1B4FFF',
