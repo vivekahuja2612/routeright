@@ -407,7 +407,8 @@ app.get('/', (_req: Request, res: Response) => {
       const resetBtn = '<button class="reset-btn" onclick="doReset()">Search again</button>';
 
       if (data.error) {
-        setStatus('<p class="error-msg">Could not find routes right now. Please try again.</p>' + resetBtn);
+        const msg = data.reason || 'Could not find routes right now. Please try again.';
+        setStatus('<p class="error-msg">' + msg + '</p>' + resetBtn);
         return;
       }
 
@@ -459,6 +460,38 @@ app.post('/api/search', async (req: Request<object, object, SearchBody>, res: Re
   if (!source || !destination || !leaving_time || !expected_arrival) {
     res.status(400).json({ error: 'source, destination, leaving_time, and expected_arrival are required' });
     return;
+  }
+
+  // Guard: if destination not in corpus, check it's within 200km of Mumbai before calling Claude
+  if (roadDistanceKm(source, destination) === null) {
+    try {
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination + ' India')}&format=json&limit=1`,
+        { headers: { 'User-Agent': 'RouteRight/1.0 (routeright.vercel.app)' }, signal: AbortSignal.timeout(3000) }
+      );
+      const geoData = await geoRes.json() as Array<{ lat: string; lon: string }>;
+      if (geoData[0]) {
+        const destLat = parseFloat(geoData[0].lat);
+        const destLon = parseFloat(geoData[0].lon);
+        // Haversine from Mumbai center
+        const R = 6371;
+        const toRad = (d: number) => (d * Math.PI) / 180;
+        const dLat = toRad(destLat - 19.0760);
+        const dLng = toRad(destLon - 72.8777);
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(19.0760)) * Math.cos(toRad(destLat)) * Math.sin(dLng / 2) ** 2;
+        const km = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        if (km > 200) {
+          res.json({
+            routes: [],
+            error: 'outside_coverage',
+            reason: `${destination} is more than 200km from Mumbai. RouteRight only covers routes within Mumbai.`,
+          });
+          return;
+        }
+      }
+    } catch {
+      // Geocoding timed out or failed — proceed, Claude will handle it
+    }
   }
 
   try {
