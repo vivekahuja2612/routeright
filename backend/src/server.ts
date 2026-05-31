@@ -201,71 +201,133 @@ app.get('/', (_req: Request, res: Response) => {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: #F7F7F5; color: #1A1A1A; min-height: 100vh; }
-    .page { max-width: 480px; margin: 0 auto; padding: 48px 16px 64px; }
-    h1 { font-size: 20px; font-weight: 700; margin-bottom: 32px; }
-    label { display: block; font-size: 12px; font-weight: 600; color: #6B6B6B; letter-spacing: 0.5px; margin-bottom: 4px; }
-    input { display: block; width: 100%; border: 1px solid #E4E4E4; background: #fff; padding: 12px; border-radius: 8px; font-family: inherit; font-size: 15px; color: #1A1A1A; margin-bottom: 16px; outline: none; }
-    input:focus { border-color: #1B4FFF; }
-    input::placeholder { color: #6B6B6B; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(150deg, #0d1b2a 0%, #0f2744 50%, #0d1b2a 100%);
+      background-attachment: fixed;
+      color: #fff;
+      min-height: 100vh;
+    }
+    .page { max-width: 480px; margin: 0 auto; padding: 48px 16px 80px; }
+
+    /* ── Brand ── */
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .brand-name { font-size: 22px; font-weight: 700; color: #fff; }
+    .tagline { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 36px; padding-left: 52px; }
+
+    /* ── Form ── */
+    .form-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+    }
+    label { display: block; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); letter-spacing: 0.7px; margin-bottom: 6px; }
+    input {
+      display: block; width: 100%;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.95);
+      padding: 12px 14px; border-radius: 10px;
+      font-family: inherit; font-size: 15px; color: #1A1A1A;
+      margin-bottom: 16px; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus { border-color: #1B4FFF; box-shadow: 0 0 0 3px rgba(27,79,255,0.25); }
+    input::placeholder { color: #9CA3AF; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .row .field { margin-bottom: 0; }
     .row input { margin-bottom: 0; }
-    .row-wrap { margin-bottom: 16px; }
-    button { width: 100%; background: #1B4FFF; color: #fff; border: none; padding: 14px; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 4px; }
-    button:disabled { background: #6B6B6B; cursor: not-allowed; }
-    button:hover:not(:disabled) { background: #1440cc; }
-    .hint { font-size: 13px; color: #6B6B6B; margin-top: -12px; margin-bottom: 16px; }
-    #status { margin-top: 32px; }
-    .loading { text-align: center; padding: 40px 0; }
-    .pulsebar { width: 80%; height: 4px; background: #1B4FFF; border-radius: 2px; margin: 24px auto 20px; animation: pulse 1.4s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
-    .loading-text { font-size: 15px; color: #1A1A1A; }
-    .card { background: #fff; border: 1px solid #E4E4E4; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
-    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .badge { font-size: 12px; font-weight: 700; color: #6B6B6B; }
+    .row-wrap { margin-bottom: 4px; }
+    button {
+      width: 100%; background: #1B4FFF; color: #fff; border: none;
+      padding: 14px; border-radius: 10px;
+      font-family: inherit; font-size: 15px; font-weight: 600;
+      cursor: pointer; margin-top: 16px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    button:disabled { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.4); cursor: not-allowed; }
+    button:hover:not(:disabled) { background: #2d5fff; }
+    button:active:not(:disabled) { transform: scale(0.99); }
+
+    /* ── Status area ── */
+    #status { margin-top: 28px; }
+    .loading { text-align: center; padding: 48px 0; }
+    .pulsebar { width: 72%; height: 3px; background: #1B4FFF; border-radius: 2px; margin: 0 auto 24px; animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:.2} 50%{opacity:1} }
+    .loading-text { font-size: 15px; color: rgba(255,255,255,0.7); }
+
+    /* ── Route cards ── */
+    .section-header { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45); letter-spacing: 0.5px; margin-bottom: 14px; }
+    .card {
+      background: #fff; border-radius: 12px; padding: 18px; margin-bottom: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+      color: #1A1A1A;
+    }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .badge { font-size: 11px; font-weight: 700; color: #6B6B6B; letter-spacing: 0.3px; }
     .badge.best { color: #1B4FFF; }
-    .headline { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-    .summary { font-size: 14px; color: #6B6B6B; margin-bottom: 10px; }
-    .congestion { display: flex; flex-direction: column; gap: 4px; }
-    .cong-row { font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    .headline { font-size: 20px; font-weight: 700; margin-bottom: 6px; color: #1A1A1A; }
+    .summary { font-size: 14px; color: #6B6B6B; margin-bottom: 12px; }
+    .congestion { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #F0F0F0; padding-top: 10px; }
+    .cong-row { font-size: 13px; color: #1A1A1A; display: flex; align-items: center; gap: 6px; }
     .dot-green { color: #16A34A; }
     .dot-red { color: #DC2626; }
-    .disclosure { font-size: 13px; color: #D97706; margin-bottom: 8px; }
-    .error-msg { color: #DC2626; font-size: 15px; text-align: center; padding: 32px 0; }
-    .fallback { background: #fff; border: 1px solid #E4E4E4; border-radius: 8px; padding: 24px 20px; }
-    .fallback h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+
+    /* ── Fallback / error ── */
+    .disclosure { font-size: 13px; color: #F59E0B; margin-bottom: 8px; }
+    .error-msg { color: #FCA5A5; font-size: 15px; text-align: center; padding: 40px 0; }
+    .fallback { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.25); color: #1A1A1A; }
+    .fallback h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #1A1A1A; }
     .fallback p { font-size: 15px; color: #6B6B6B; }
-    .fallback .leave-by { font-size: 22px; font-weight: 700; color: #1B4FFF; margin: 12px 0; }
-    .section-header { font-size: 12px; font-weight: 600; color: #6B6B6B; letter-spacing: 0.5px; margin-bottom: 12px; margin-top: 28px; }
-    .reset-btn { background: none; border: none; color: #6B6B6B; font-size: 14px; font-weight: 400; cursor: pointer; width: auto; padding: 0; margin: 20px auto 0; display: block; text-decoration: underline; }
-    .reset-btn:hover { color: #1A1A1A; background: none; }
+    .fallback .leave-by { font-size: 26px; font-weight: 700; color: #1B4FFF; margin: 12px 0; }
+
+    /* ── Reset ── */
+    .reset-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.55); font-size: 14px; font-weight: 400;
+      cursor: pointer; width: auto; padding: 10px 24px;
+      margin: 24px auto 0; display: block; border-radius: 8px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .reset-btn:hover { border-color: rgba(255,255,255,0.5); color: #fff; background: none; }
   </style>
 </head>
 <body>
   <div class="page">
-    <h1>RouteRight</h1>
+    <div class="brand">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="40" height="40" rx="10" fill="#1B4FFF"/>
+        <circle cx="13" cy="12" r="4" fill="white"/>
+        <circle cx="27" cy="28" r="3.5" stroke="white" stroke-width="2" fill="none"/>
+        <circle cx="27" cy="28" r="1" fill="white"/>
+        <path d="M13 16 C13 23 27 17 27 24.5" stroke="white" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.7"/>
+      </svg>
+      <span class="brand-name">RouteRight</span>
+    </div>
+    <p class="tagline">Find the fastest way across Mumbai</p>
 
-    <label for="source">FROM</label>
-    <input id="source" type="text" placeholder="Enter starting point" />
+    <div class="form-card">
+      <label for="source">FROM</label>
+      <input id="source" type="text" placeholder="Enter starting point" />
 
-    <label for="dest">TO</label>
-    <input id="dest" type="text" placeholder="Enter destination in Mumbai" />
+      <label for="dest">TO</label>
+      <input id="dest" type="text" placeholder="Enter destination in Mumbai" />
 
-    <div class="row-wrap">
-      <div class="row">
-        <div class="field">
-          <label for="leaving">LEAVING AT</label>
-          <input id="leaving" type="time" value="08:15" />
-        </div>
-        <div class="field">
-          <label for="arrival">MUST ARRIVE BY</label>
-          <input id="arrival" type="time" value="09:00" />
+      <div class="row-wrap">
+        <div class="row">
+          <div>
+            <label for="leaving">LEAVING AT</label>
+            <input id="leaving" type="time" value="08:15" />
+          </div>
+          <div>
+            <label for="arrival">MUST ARRIVE BY</label>
+            <input id="arrival" type="time" value="09:00" />
+          </div>
         </div>
       </div>
-    </div>
 
-    <button id="search-btn" onclick="doSearch()">Find Routes</button>
+      <button id="search-btn" onclick="doSearch()">Find Routes</button>
+    </div>
 
     <div id="status"></div>
   </div>
