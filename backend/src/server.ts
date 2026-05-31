@@ -189,6 +189,10 @@ interface SearchResponse {
   error?: string;
 }
 
+app.get('/', (_req: Request, res: Response) => {
+  res.json({ status: 'ok', service: 'RouteRight API' });
+});
+
 app.post('/api/search', async (req: Request<object, object, SearchBody>, res: Response) => {
   const { source, destination, leaving_time, expected_arrival } = req.body;
 
