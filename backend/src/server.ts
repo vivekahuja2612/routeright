@@ -2,8 +2,14 @@ import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import Anthropic from '@anthropic-ai/sdk';
+import { createClient } from '@supabase/supabase-js';
 import { lookupRoute } from './corpus';
 import { roadDistanceKm, cabEstimate, parseHour, parseMinutes, formatTime } from './routing';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!,
+);
 
 const app = express();
 app.use(cors());
@@ -225,6 +231,69 @@ Return ALL viable options (train, bus, cab) that beat the walking baseline, rank
     const message = err instanceof Error ? err.message : 'Unknown error';
     res.status(500).json({ error: message });
   }
+});
+
+app.get('/api/saved-routes', async (req: Request, res: Response) => {
+  const { device_id } = req.query as { device_id?: string };
+  if (!device_id) {
+    res.status(400).json({ error: 'device_id is required' });
+    return;
+  }
+  const { data, error } = await supabase
+    .from('saved_routes')
+    .select('*')
+    .eq('device_id', device_id)
+    .order('created_at', { ascending: false });
+  if (error) {
+    res.status(500).json({ error: error.message });
+    return;
+  }
+  res.json(data);
+});
+
+interface SaveRouteBody {
+  device_id: string;
+  source: string;
+  destination: string;
+  leaving_time: string;
+  arrival_time: string;
+}
+
+app.post('/api/saved-routes', async (req: Request<object, object, SaveRouteBody>, res: Response) => {
+  const { device_id, source, destination, leaving_time, arrival_time } = req.body;
+  if (!device_id || !source || !destination || !leaving_time || !arrival_time) {
+    res.status(400).json({ error: 'All fields are required' });
+    return;
+  }
+  const { data, error } = await supabase
+    .from('saved_routes')
+    .insert({ device_id, source, destination, leaving_time, arrival_time })
+    .select()
+    .single();
+  if (error) {
+    res.status(500).json({ error: error.message });
+    return;
+  }
+  res.status(201).json(data);
+});
+
+app.delete('/api/saved-routes/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { device_id } = req.query as { device_id?: string };
+  if (!device_id) {
+    res.status(400).json({ error: 'device_id is required' });
+    return;
+  }
+  const { error } = await supabase
+    .from('saved_routes')
+    .delete()
+    .eq('id', id)
+    .eq('device_id', device_id); // prevents deleting another user's route
+  if (error) {
+    res.status(500).json({ error: error.message });
+    return;
+  }
+  res.status(204).send();
 });
 
 const port = parseInt(process.env.PORT ?? '3001', 10);

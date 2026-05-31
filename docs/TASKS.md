@@ -100,14 +100,14 @@
 
 **Test cases validated:** PRD Must-Pass #7
 
-- [ ] Set up Supabase project + `saved_routes` table: `device_id`, `source`, `destination`, `leaving_time`, `arrival_time`, `created_at`
-- [ ] Implement device ID generation on first app open (stored in AsyncStorage — no account, no PII)
-- [ ] Implement save route — fires from Results Screen bookmark tap and Route Detail save button
-- [ ] Implement `GET /api/saved-routes` and `POST /api/saved-routes` backend routes
-- [ ] Build Saved Routes Screen with live Supabase data via TanStack Query
-- [ ] Implement "Search now" — re-triggers `POST /api/search` with saved params, navigates to Loading → Results
-- [ ] Implement delete: `DELETE /api/saved-routes/:id` + optimistic UI update
-- [ ] Implement empty state
+- [x] Set up Supabase project + `saved_routes` table: `device_id`, `source`, `destination`, `leaving_time`, `arrival_time`, `created_at`
+- [x] Implement device ID generation on first app open (stored in AsyncStorage — no account, no PII)
+- [x] Implement save route — fires from Results Screen bookmark tap and Route Detail save button
+- [x] Implement `GET /api/saved-routes` and `POST /api/saved-routes` backend routes
+- [x] Build Saved Routes Screen with live Supabase data via TanStack Query
+- [x] Implement "Search now" — re-triggers `POST /api/search` with saved params, navigates to Loading → Results
+- [x] Implement delete: `DELETE /api/saved-routes/:id` + optimistic UI update
+- [x] Implement empty state
 
 ---
 

@@ -4,15 +4,13 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Platform,
   Animated,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { storeSearch } from '../store';
 import type { SearchResult, SearchParams } from '../types';
 
-const BACKEND_URL =
-  Platform.OS === 'android' ? 'http://10.0.2.2:3001' : 'http://localhost:3001';
+import { BACKEND_URL } from '../constants';
 
 const STATUS_MESSAGES = [
   'Checking local trains...',

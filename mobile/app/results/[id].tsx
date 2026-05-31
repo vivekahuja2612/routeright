@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { getResult, getParams } from '../../store';
 import { Toast } from '../../components/Toast';
+import { BACKEND_URL } from '../../constants';
+import { loadDeviceId } from '../../deviceId';
 
 const MODE_ICON: Record<string, string> = {
   walk: '🚶',
@@ -25,10 +27,31 @@ export default function RouteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const result = getResult();
   const params = getParams();
-  const [toastVisible, setToastVisible] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const routeIndex = parseInt(id ?? '0', 10);
   const route = result?.routes[routeIndex];
+
+  async function handleSave() {
+    if (!params) return;
+    try {
+      const deviceId = await loadDeviceId();
+      const res = await fetch(`${BACKEND_URL}/api/saved-routes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device_id: deviceId,
+          source: params.source,
+          destination: params.destination,
+          leaving_time: params.leaving_time,
+          arrival_time: params.expected_arrival,
+        }),
+      });
+      setToast(res.ok ? 'Route saved.' : 'Failed to save.');
+    } catch {
+      setToast('Failed to save.');
+    }
+  }
 
   if (!route || !params) {
     return (
@@ -82,7 +105,6 @@ export default function RouteDetailScreen() {
           </Text>
         </View>
 
-        {/* space so total bar doesn't overlap last content */}
         <View style={{ height: 96 }} />
       </ScrollView>
 
@@ -91,16 +113,13 @@ export default function RouteDetailScreen() {
           <Text style={styles.totalTime}>{route.total_time_minutes} min</Text>
           <Text style={styles.totalCost}>₹{route.total_cost_inr} total</Text>
         </View>
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={() => setToastVisible(true)}
-        >
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>Save route</Text>
         </TouchableOpacity>
       </View>
 
-      {toastVisible && (
-        <Toast message="Route saved." onHide={() => setToastVisible(false)} />
+      {toast !== null && (
+        <Toast message={toast} onHide={() => setToast(null)} />
       )}
     </View>
   );

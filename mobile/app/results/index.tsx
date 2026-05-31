@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { useRouter } from 'expo-router';
 import { getResult, getParams } from '../../store';
 import { Toast } from '../../components/Toast';
+import { BACKEND_URL } from '../../constants';
+import { loadDeviceId } from '../../deviceId';
 
 const MODE_ICON: Record<string, string> = {
   walk: '🚶',
@@ -24,7 +26,28 @@ export default function ResultsScreen() {
   const router = useRouter();
   const result = getResult();
   const params = getParams();
-  const [toastVisible, setToastVisible] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  async function handleSave(routeIndex: number) {
+    if (!params) return;
+    try {
+      const deviceId = await loadDeviceId();
+      const res = await fetch(`${BACKEND_URL}/api/saved-routes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device_id: deviceId,
+          source: params.source,
+          destination: params.destination,
+          leaving_time: params.leaving_time,
+          arrival_time: params.expected_arrival,
+        }),
+      });
+      setToast(res.ok ? 'Route saved.' : 'Failed to save.');
+    } catch {
+      setToast('Failed to save.');
+    }
+  }
 
   if (!result || !params) {
     return (
@@ -61,10 +84,7 @@ export default function ResultsScreen() {
             <View style={styles.cardTop}>
               <Text style={[styles.badge, i === 0 && styles.badgeBest]}>{BADGE[i]}</Text>
               <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setToastVisible(true);
-                }}
+                onPress={(e) => { e.stopPropagation(); handleSave(i); }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Text style={styles.bookmark}>🔖</Text>
@@ -97,8 +117,8 @@ export default function ResultsScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {toastVisible && (
-        <Toast message="Route saved." onHide={() => setToastVisible(false)} />
+      {toast !== null && (
+        <Toast message={toast} onHide={() => setToast(null)} />
       )}
     </View>
   );
