@@ -238,6 +238,8 @@ app.get('/', (_req: Request, res: Response) => {
     .fallback p { font-size: 15px; color: #6B6B6B; }
     .fallback .leave-by { font-size: 22px; font-weight: 700; color: #1B4FFF; margin: 12px 0; }
     .section-header { font-size: 12px; font-weight: 600; color: #6B6B6B; letter-spacing: 0.5px; margin-bottom: 12px; margin-top: 28px; }
+    .reset-btn { background: none; border: none; color: #6B6B6B; font-size: 14px; font-weight: 400; cursor: pointer; width: auto; padding: 0; margin: 20px auto 0; display: block; text-decoration: underline; }
+    .reset-btn:hover { color: #1A1A1A; background: none; }
   </style>
 </head>
 <body>
@@ -286,6 +288,15 @@ app.get('/', (_req: Request, res: Response) => {
 
     function setStatus(html) { document.getElementById('status').innerHTML = html; }
 
+    function doReset() {
+      document.getElementById('source').value = '';
+      document.getElementById('dest').value = '';
+      document.getElementById('leaving').value = '08:15';
+      document.getElementById('arrival').value = '09:00';
+      setStatus('');
+      document.getElementById('source').focus();
+    }
+
     function startMsgs() {
       msgIdx = 0;
       setStatus('<div class="loading"><div class="pulsebar"></div><p class="loading-text">' + MSGS[0] + '</p></div>');
@@ -331,8 +342,10 @@ app.get('/', (_req: Request, res: Response) => {
     }
 
     function renderResult(data, source, dest, leaving, arrival) {
+      const resetBtn = '<button class="reset-btn" onclick="doReset()">Search again</button>';
+
       if (data.error) {
-        setStatus('<p class="error-msg">Could not find routes right now. Please try again.</p>');
+        setStatus('<p class="error-msg">Could not find routes right now. Please try again.</p>' + resetBtn);
         return;
       }
 
@@ -342,12 +355,12 @@ app.get('/', (_req: Request, res: Response) => {
           '<p>Leave by</p>' +
           '<div class="leave-by">' + data.suggested_leave_by + '</div>' +
           '<p>to arrive on time.</p>' +
-          '</div>');
+          '</div>' + resetBtn);
         return;
       }
 
       if (!data.routes || data.routes.length === 0) {
-        setStatus('<p class="error-msg">No routes found for this journey.</p>');
+        setStatus('<p class="error-msg">No routes found for this journey.</p>' + resetBtn);
         return;
       }
 
@@ -370,6 +383,7 @@ app.get('/', (_req: Request, res: Response) => {
           '</div>';
       });
 
+      html += resetBtn;
       setStatus(html);
     }
   </script>
