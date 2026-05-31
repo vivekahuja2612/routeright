@@ -1,4 +1,1 @@
-import { Platform } from 'react-native';
-
-export const BACKEND_URL =
-  Platform.OS === 'android' ? 'http://10.0.2.2:3001' : 'http://localhost:3001';
+export const BACKEND_URL = 'https://backend-red-omega-48.vercel.app';

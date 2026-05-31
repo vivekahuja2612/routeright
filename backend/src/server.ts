@@ -306,6 +306,10 @@ app.delete('/api/saved-routes/:id', async (req: Request, res: Response) => {
 });
 
 const port = parseInt(process.env.PORT ?? '3001', 10);
-app.listen(port, () => {
-  console.log(`RouteRight backend running on port ${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`RouteRight backend running on port ${port}`);
+  });
+}
+
+export default app;
